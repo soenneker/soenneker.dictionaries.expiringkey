@@ -1,4 +1,4 @@
-using Soenneker.Dictionaries.ExpiringKey.Abstract;
+using FluentAssertions;
 using Soenneker.Tests.FixturedUnit;
 using Xunit;
 using Xunit.Abstractions;
@@ -8,10 +8,18 @@ namespace Soenneker.Dictionaries.ExpiringKey.Tests;
 [Collection("Collection")]
 public class ExpiringKeyDictionaryTests : FixturedUnitTest
 {
-    private readonly IExpiringKeyDictionary _util;
-
     public ExpiringKeyDictionaryTests(Fixture fixture, ITestOutputHelper output) : base(fixture, output)
     {
-        _util = Resolve<IExpiringKeyDictionary>(true);
+    }
+
+    [Fact]
+    public void TryAdd_should_function()
+    {
+        var dictionary = new ExpiringKeyDictionary();
+
+        dictionary.TryAdd("test", 2000);
+
+        dictionary.ContainsKey("test").Should().BeTrue();
+
     }
 }
