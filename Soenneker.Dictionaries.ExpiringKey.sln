@@ -15,11 +15,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{
 		.github\workflows\publish-package.yml = .github\workflows\publish-package.yml
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Soenneker.Dictionaries.ExpiringKey.Tests", "test\Soenneker.Dictionaries.ExpiringKey.Tests.csproj", "{6456E465-9523-4612-9115-9D9B585B42E8}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{81EF41E6-82F4-404F-9FCE-049B4CBCE196}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{47FB874E-6667-4D2D-AB56-2BE057BDE46F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Soenneker.Dictionaries.ExpiringKey.Tests", "test\Soenneker.Dictionaries.ExpiringKey.Tests\Soenneker.Dictionaries.ExpiringKey.Tests.csproj", "{6456E465-9523-4612-9115-9D9B585B42E8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -43,7 +43,11 @@ Global
 		{41850636-33B4-4228-AE59-A2113F66B9FA} = {81EF41E6-82F4-404F-9FCE-049B4CBCE196}
 		{D786EC1A-4F59-412F-8624-83E6E3525B0C} = {4E42254D-039C-40ED-B3F4-8C1A94A366D1}
 		{6456E465-9523-4612-9115-9D9B585B42E8} = {47FB874E-6667-4D2D-AB56-2BE057BDE46F}
-	EndGlobalSection
+	
+    {41850636-33B4-4228-AE59-A2113F66B9FA} = {8D2D7C4E-6519-4211-B09C-1B0E55A0F684}
+
+    {6456E465-9523-4612-9115-9D9B585B42E8} = {BA9DE495-DEC7-4A01-984B-8388B7ACD5A1}
+EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B849EC5C-B7B3-4C90-9B66-CBC15CCB776A}
 	EndGlobalSection
