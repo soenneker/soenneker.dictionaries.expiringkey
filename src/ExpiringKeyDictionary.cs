@@ -1,3 +1,4 @@
+using System;
 using Soenneker.Dictionaries.ExpiringKey.Abstract;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
@@ -61,7 +62,6 @@ public class ExpiringKeyDictionary : IExpiringKeyDictionary
         return true;
     }
 
-
     public bool RemoveSync(string key)
     {
         _keyDict.Remove(key, out Timer? timer);
@@ -73,16 +73,21 @@ public class ExpiringKeyDictionary : IExpiringKeyDictionary
         return true;
     }
 
-
     private Timer CreateTimer(string key, int expirationTimeMilliseconds)
     {
-        return new Timer(Expire, key, expirationTimeMilliseconds, Timeout.Infinite);
+        return new Timer(ExpireSync, key, expirationTimeMilliseconds, Timeout.Infinite);
     }
 
-    private void Expire(object? state)
+    private ValueTask Expire(object? state)
     {
         var key = (string) state!;
-        TryRemove(key);
+        return TryRemove(key);
+    }
+
+    private void ExpireSync(object? state)
+    {
+        var key = (string)state!;
+        TryRemoveSync(key);
     }
 
     public void ClearSync()
@@ -97,6 +102,8 @@ public class ExpiringKeyDictionary : IExpiringKeyDictionary
 
     public void Dispose()
     {
+        GC.SuppressFinalize(this);
+
         foreach (Timer timer in _keyDict.Values)
         {
             timer.Dispose();
@@ -107,6 +114,8 @@ public class ExpiringKeyDictionary : IExpiringKeyDictionary
 
     public async ValueTask DisposeAsync()
     {
+        GC.SuppressFinalize(this);
+
         foreach (Timer timer in _keyDict.Values)
         {
             await timer.DisposeAsync().NoSync();
