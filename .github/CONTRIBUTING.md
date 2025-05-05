@@ -1,4 +1,4 @@
-# Contributing to Soenneker.Dictionaries.ExpiringKey
+﻿# Contributing to Soenneker.Dictionaries.ExpiringKey
 
 We're excited that you're interested in contributing!
 
