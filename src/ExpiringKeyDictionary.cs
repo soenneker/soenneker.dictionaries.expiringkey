@@ -9,7 +9,7 @@ using System.Collections.Generic;
 namespace Soenneker.Dictionaries.ExpiringKey;
 
 /// <inheritdoc cref="IExpiringKeyDictionary"/>
-public class ExpiringKeyDictionary : IExpiringKeyDictionary
+public sealed class ExpiringKeyDictionary : IExpiringKeyDictionary
 {
     private readonly ConcurrentDictionary<string, Timer> _keyDict = new();
 
@@ -102,8 +102,6 @@ public class ExpiringKeyDictionary : IExpiringKeyDictionary
 
     public void Dispose()
     {
-        GC.SuppressFinalize(this);
-
         foreach (Timer timer in _keyDict.Values)
         {
             timer.Dispose();
@@ -114,8 +112,6 @@ public class ExpiringKeyDictionary : IExpiringKeyDictionary
 
     public async ValueTask DisposeAsync()
     {
-        GC.SuppressFinalize(this);
-
         foreach (Timer timer in _keyDict.Values)
         {
             await timer.DisposeAsync().NoSync();
