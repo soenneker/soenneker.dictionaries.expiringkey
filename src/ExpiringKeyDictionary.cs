@@ -1,4 +1,3 @@
-using System;
 using Soenneker.Dictionaries.ExpiringKey.Abstract;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
@@ -20,7 +19,13 @@ public sealed class ExpiringKeyDictionary : IExpiringKeyDictionary
 
     public void AddOrUpdate(string key, int expirationTimeMilliseconds)
     {
-        _keyDict.AddOrUpdate(key, CreateTimer(key, expirationTimeMilliseconds), (_, _) => CreateTimer(key, expirationTimeMilliseconds));
+        _keyDict.AddOrUpdate(key, 
+            CreateTimer(key, expirationTimeMilliseconds), 
+            (_, oldTimer) => 
+            {
+                oldTimer.Dispose();
+                return CreateTimer(key, expirationTimeMilliseconds);
+            });
     }
 
     public bool TryAdd(string key, int expirationTimeMilliseconds)
@@ -58,7 +63,7 @@ public sealed class ExpiringKeyDictionary : IExpiringKeyDictionary
         if (timer == null)
             return false;
 
-        await timer.DisposeAsync();
+        await timer.DisposeAsync().NoSync();
         return true;
     }
 
