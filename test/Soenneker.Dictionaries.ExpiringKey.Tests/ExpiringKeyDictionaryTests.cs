@@ -1,20 +1,19 @@
 using AwesomeAssertions;
 using Soenneker.Dictionaries.ExpiringKey;
-using Soenneker.Tests.FixturedUnit;
+using Soenneker.Tests.HostedUnit;
 using System.Threading;
 using System.Threading.Tasks;
-using Xunit;
 
 namespace Soenneker.Dictionaries.ExpiringKey.Tests;
 
-[Collection("Collection")]
-public class ExpiringKeyDictionaryTests : FixturedUnitTest
+[ClassDataSource<Host>(Shared = SharedType.PerTestSession)]
+public class ExpiringKeyDictionaryTests : HostedUnitTest
 {
-    public ExpiringKeyDictionaryTests(Fixture fixture, ITestOutputHelper output) : base(fixture, output)
+    public ExpiringKeyDictionaryTests(Host host) : base(host)
     {
     }
 
-    [Fact]
+    [Test]
     public void TryAdd_ReturnsTrue_WhenKeyDoesNotExist()
     {
         // Arrange
@@ -28,7 +27,7 @@ public class ExpiringKeyDictionaryTests : FixturedUnitTest
         dictionary.ContainsKey("test").Should().BeTrue();
     }
 
-    [Fact]
+    [Test]
     public void TryAdd_ReturnsFalse_WhenKeyAlreadyExists()
     {
         // Arrange
@@ -43,7 +42,7 @@ public class ExpiringKeyDictionaryTests : FixturedUnitTest
         dictionary.ContainsKey("test").Should().BeTrue();
     }
 
-    [Fact]
+    [Test]
     public void TryAdd_AddsKey_WhenKeyDoesNotExist()
     {
         // Arrange
@@ -56,7 +55,7 @@ public class ExpiringKeyDictionaryTests : FixturedUnitTest
         dictionary.ContainsKey("newKey").Should().BeTrue();
     }
 
-    [Fact]
+    [Test]
     public void TryAdd_DoesNotAddKey_WhenKeyAlreadyExists()
     {
         // Arrange
@@ -70,7 +69,7 @@ public class ExpiringKeyDictionaryTests : FixturedUnitTest
         dictionary.ContainsKey("existing").Should().BeTrue();
     }
 
-    [Fact]
+    [Test]
     public void TryAdd_WithMultipleKeys_AllSucceed()
     {
         // Arrange
@@ -90,7 +89,7 @@ public class ExpiringKeyDictionaryTests : FixturedUnitTest
         dictionary.ContainsKey("key3").Should().BeTrue();
     }
 
-    [Fact]
+    [Test]
     public void ContainsKey_ReturnsFalse_WhenKeyDoesNotExist()
     {
         // Arrange
@@ -103,7 +102,7 @@ public class ExpiringKeyDictionaryTests : FixturedUnitTest
         result.Should().BeFalse();
     }
 
-    [Fact]
+    [Test]
     public void ContainsKey_ReturnsTrue_WhenKeyExists()
     {
         // Arrange
@@ -117,7 +116,7 @@ public class ExpiringKeyDictionaryTests : FixturedUnitTest
         result.Should().BeTrue();
     }
 
-    [Fact]
+    [Test]
     public void ContainsKey_ReturnsFalse_AfterKeyIsRemoved()
     {
         // Arrange
@@ -132,7 +131,7 @@ public class ExpiringKeyDictionaryTests : FixturedUnitTest
         result.Should().BeFalse();
     }
 
-    [Fact]
+    [Test]
     public void AddOrUpdate_AddsKey_WhenKeyDoesNotExist()
     {
         // Arrange
@@ -145,7 +144,7 @@ public class ExpiringKeyDictionaryTests : FixturedUnitTest
         dictionary.ContainsKey("newKey").Should().BeTrue();
     }
 
-    [Fact]
+    [Test]
     public void AddOrUpdate_UpdatesKey_WhenKeyAlreadyExists()
     {
         // Arrange
@@ -159,7 +158,7 @@ public class ExpiringKeyDictionaryTests : FixturedUnitTest
         dictionary.ContainsKey("test").Should().BeTrue();
     }
 
-    [Fact]
+    [Test]
     public void GetOrAdd_ReturnsTimer_WhenKeyDoesNotExist()
     {
         // Arrange
@@ -173,7 +172,7 @@ public class ExpiringKeyDictionaryTests : FixturedUnitTest
         dictionary.ContainsKey("newKey").Should().BeTrue();
     }
 
-    [Fact]
+    [Test]
     public void GetOrAdd_ReturnsExistingTimer_WhenKeyAlreadyExists()
     {
         // Arrange
@@ -188,7 +187,7 @@ public class ExpiringKeyDictionaryTests : FixturedUnitTest
         dictionary.ContainsKey("test").Should().BeTrue();
     }
 
-    [Fact]
+    [Test]
     public void TryRemove_RemovesKey_WhenKeyExists()
     {
         // Arrange
@@ -202,7 +201,7 @@ public class ExpiringKeyDictionaryTests : FixturedUnitTest
         dictionary.ContainsKey("test").Should().BeFalse();
     }
 
-    [Fact]
+    [Test]
     public void TryRemove_DoesNotThrow_WhenKeyDoesNotExist()
     {
         // Arrange
@@ -213,7 +212,7 @@ public class ExpiringKeyDictionaryTests : FixturedUnitTest
         dictionary.ContainsKey("nonexistent").Should().BeFalse();
     }
 
-    [Fact]
+    [Test]
     public async Task TryRemove_Async_RemovesKey_WhenKeyExists()
     {
         // Arrange
@@ -227,7 +226,7 @@ public class ExpiringKeyDictionaryTests : FixturedUnitTest
         dictionary.ContainsKey("test").Should().BeFalse();
     }
 
-    [Fact]
+    [Test]
     public async Task TryRemove_Async_DoesNotThrow_WhenKeyDoesNotExist()
     {
         // Arrange
@@ -238,7 +237,7 @@ public class ExpiringKeyDictionaryTests : FixturedUnitTest
         dictionary.ContainsKey("nonexistent").Should().BeFalse();
     }
 
-    [Fact]
+    [Test]
     public void RemoveSync_ReturnsTrue_WhenKeyExists()
     {
         // Arrange
@@ -253,7 +252,7 @@ public class ExpiringKeyDictionaryTests : FixturedUnitTest
         dictionary.ContainsKey("test").Should().BeFalse();
     }
 
-    [Fact]
+    [Test]
     public void RemoveSync_ReturnsFalse_WhenKeyDoesNotExist()
     {
         // Arrange
@@ -266,7 +265,7 @@ public class ExpiringKeyDictionaryTests : FixturedUnitTest
         result.Should().BeFalse();
     }
 
-    [Fact]
+    [Test]
     public async Task Remove_Async_ReturnsTrue_WhenKeyExists()
     {
         // Arrange
@@ -281,7 +280,7 @@ public class ExpiringKeyDictionaryTests : FixturedUnitTest
         dictionary.ContainsKey("test").Should().BeFalse();
     }
 
-    [Fact]
+    [Test]
     public async Task Remove_Async_ReturnsFalse_WhenKeyDoesNotExist()
     {
         // Arrange
@@ -294,7 +293,7 @@ public class ExpiringKeyDictionaryTests : FixturedUnitTest
         result.Should().BeFalse();
     }
 
-    [Fact]
+    [Test]
     public void ClearSync_RemovesAllKeys()
     {
         // Arrange
@@ -312,7 +311,7 @@ public class ExpiringKeyDictionaryTests : FixturedUnitTest
         dictionary.ContainsKey("key3").Should().BeFalse();
     }
 
-    [Fact]
+    [Test]
     public void ClearSync_DoesNotThrow_WhenDictionaryIsEmpty()
     {
         // Arrange
@@ -323,7 +322,7 @@ public class ExpiringKeyDictionaryTests : FixturedUnitTest
         dictionary.ContainsKey("any").Should().BeFalse();
     }
 
-    [Fact]
+    [Test]
     public async Task Clear_Async_RemovesAllKeys()
     {
         // Arrange
@@ -341,7 +340,7 @@ public class ExpiringKeyDictionaryTests : FixturedUnitTest
         dictionary.ContainsKey("key3").Should().BeFalse();
     }
 
-    [Fact]
+    [Test]
     public async Task Clear_Async_DoesNotThrow_WhenDictionaryIsEmpty()
     {
         // Arrange
@@ -352,7 +351,7 @@ public class ExpiringKeyDictionaryTests : FixturedUnitTest
         dictionary.ContainsKey("any").Should().BeFalse();
     }
 
-    [Fact]
+    [Test]
     public void Key_Expires_AfterExpirationTime()
     {
         // Arrange
@@ -367,7 +366,7 @@ public class ExpiringKeyDictionaryTests : FixturedUnitTest
         dictionary.ContainsKey("test").Should().BeFalse();
     }
 
-    [Fact]
+    [Test]
     public void Key_DoesNotExpire_BeforeExpirationTime()
     {
         // Arrange
@@ -381,7 +380,7 @@ public class ExpiringKeyDictionaryTests : FixturedUnitTest
         dictionary.ContainsKey("test").Should().BeTrue();
     }
 
-    [Fact]
+    [Test]
     public void AddOrUpdate_ResetsExpiration_WhenKeyExists()
     {
         // Arrange
@@ -398,7 +397,7 @@ public class ExpiringKeyDictionaryTests : FixturedUnitTest
         dictionary.ContainsKey("test").Should().BeTrue();
     }
 
-    [Fact]
+    [Test]
     public void TryAdd_WithEmptyString_Works()
     {
         // Arrange
@@ -412,7 +411,7 @@ public class ExpiringKeyDictionaryTests : FixturedUnitTest
         dictionary.ContainsKey("").Should().BeTrue();
     }
 
-    [Fact]
+    [Test]
     public void TryAdd_WithZeroExpiration_Works()
     {
         // Arrange
@@ -428,7 +427,7 @@ public class ExpiringKeyDictionaryTests : FixturedUnitTest
         dictionary.ContainsKey("test").Should().BeFalse();
     }
 
-    [Fact]
+    [Test]
     public void TryAdd_WithVeryLongExpiration_Works()
     {
         // Arrange
@@ -442,7 +441,7 @@ public class ExpiringKeyDictionaryTests : FixturedUnitTest
         dictionary.ContainsKey("test").Should().BeTrue();
     }
 
-    [Fact]
+    [Test]
     public void MultipleOperations_OnSameKey_WorkCorrectly()
     {
         // Arrange
@@ -468,7 +467,7 @@ public class ExpiringKeyDictionaryTests : FixturedUnitTest
         dictionary.ContainsKey("test").Should().BeFalse();
     }
 
-    [Fact]
+    [Test]
     public void ConcurrentOperations_WorkCorrectly()
     {
         // Arrange
@@ -488,7 +487,7 @@ public class ExpiringKeyDictionaryTests : FixturedUnitTest
         }
     }
 
-    [Fact]
+    [Test]
     public void Dispose_ClearsAllKeys()
     {
         // Arrange
@@ -504,7 +503,7 @@ public class ExpiringKeyDictionaryTests : FixturedUnitTest
         dictionary.ContainsKey("key2").Should().BeFalse();
     }
 
-    [Fact]
+    [Test]
     public async Task DisposeAsync_ClearsAllKeys()
     {
         // Arrange
