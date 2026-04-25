@@ -1,5 +1,4 @@
 using AwesomeAssertions;
-using Soenneker.Dictionaries.ExpiringKey;
 using Soenneker.Tests.HostedUnit;
 using System.Threading;
 using System.Threading.Tasks;
