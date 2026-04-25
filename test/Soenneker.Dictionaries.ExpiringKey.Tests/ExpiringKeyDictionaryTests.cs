@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Soenneker.Dictionaries.ExpiringKey.Tests;
 
-[ClassDataSource<Host>(Shared = SharedType.PerTestSession)]
+[ClassDataSource<Host>(Shared = SharedType.PerAssembly)]
 public class ExpiringKeyDictionaryTests : HostedUnitTest
 {
     public ExpiringKeyDictionaryTests(Host host) : base(host)
@@ -15,506 +15,463 @@ public class ExpiringKeyDictionaryTests : HostedUnitTest
     [Test]
     public void TryAdd_ReturnsTrue_WhenKeyDoesNotExist()
     {
-        // Arrange
         var dictionary = new ExpiringKeyDictionary();
+        const string key = "TryAdd_ReturnsTrue_WhenKeyDoesNotExist";
 
-        // Act
-        bool result = dictionary.TryAdd("test", 2000);
+        bool result = dictionary.TryAdd(key, 2000);
 
-        // Assert
         result.Should().BeTrue();
-        dictionary.ContainsKey("test").Should().BeTrue();
+        dictionary.ContainsKey(key).Should().BeTrue();
     }
 
     [Test]
     public void TryAdd_ReturnsFalse_WhenKeyAlreadyExists()
     {
-        // Arrange
         var dictionary = new ExpiringKeyDictionary();
-        dictionary.TryAdd("test", 2000);
+        const string key = "TryAdd_ReturnsFalse_WhenKeyAlreadyExists";
 
-        // Act
-        bool result = dictionary.TryAdd("test", 3000);
+        dictionary.TryAdd(key, 2000);
+        bool result = dictionary.TryAdd(key, 3000);
 
-        // Assert
         result.Should().BeFalse();
-        dictionary.ContainsKey("test").Should().BeTrue();
+        dictionary.ContainsKey(key).Should().BeTrue();
     }
 
     [Test]
     public void TryAdd_AddsKey_WhenKeyDoesNotExist()
     {
-        // Arrange
         var dictionary = new ExpiringKeyDictionary();
+        const string key = "TryAdd_AddsKey_WhenKeyDoesNotExist";
 
-        // Act
-        dictionary.TryAdd("newKey", 1000);
+        dictionary.TryAdd(key, 1000);
 
-        // Assert
-        dictionary.ContainsKey("newKey").Should().BeTrue();
+        dictionary.ContainsKey(key).Should().BeTrue();
     }
 
     [Test]
     public void TryAdd_DoesNotAddKey_WhenKeyAlreadyExists()
     {
-        // Arrange
         var dictionary = new ExpiringKeyDictionary();
-        dictionary.TryAdd("existing", 2000);
+        const string key = "TryAdd_DoesNotAddKey_WhenKeyAlreadyExists";
 
-        // Act
-        dictionary.TryAdd("existing", 5000);
+        dictionary.TryAdd(key, 2000);
+        dictionary.TryAdd(key, 5000);
 
-        // Assert
-        dictionary.ContainsKey("existing").Should().BeTrue();
+        dictionary.ContainsKey(key).Should().BeTrue();
     }
 
     [Test]
     public void TryAdd_WithMultipleKeys_AllSucceed()
     {
-        // Arrange
         var dictionary = new ExpiringKeyDictionary();
 
-        // Act
-        bool result1 = dictionary.TryAdd("key1", 1000);
-        bool result2 = dictionary.TryAdd("key2", 2000);
-        bool result3 = dictionary.TryAdd("key3", 3000);
+        const string key1 = "TryAdd_WithMultipleKeys_AllSucceed_1";
+        const string key2 = "TryAdd_WithMultipleKeys_AllSucceed_2";
+        const string key3 = "TryAdd_WithMultipleKeys_AllSucceed_3";
 
-        // Assert
+        bool result1 = dictionary.TryAdd(key1, 1000);
+        bool result2 = dictionary.TryAdd(key2, 2000);
+        bool result3 = dictionary.TryAdd(key3, 3000);
+
         result1.Should().BeTrue();
         result2.Should().BeTrue();
         result3.Should().BeTrue();
-        dictionary.ContainsKey("key1").Should().BeTrue();
-        dictionary.ContainsKey("key2").Should().BeTrue();
-        dictionary.ContainsKey("key3").Should().BeTrue();
+
+        dictionary.ContainsKey(key1).Should().BeTrue();
+        dictionary.ContainsKey(key2).Should().BeTrue();
+        dictionary.ContainsKey(key3).Should().BeTrue();
     }
 
     [Test]
     public void ContainsKey_ReturnsFalse_WhenKeyDoesNotExist()
     {
-        // Arrange
         var dictionary = new ExpiringKeyDictionary();
+        const string key = "ContainsKey_ReturnsFalse_WhenKeyDoesNotExist";
 
-        // Act
-        bool result = dictionary.ContainsKey("nonexistent");
+        bool result = dictionary.ContainsKey(key);
 
-        // Assert
         result.Should().BeFalse();
     }
 
     [Test]
     public void ContainsKey_ReturnsTrue_WhenKeyExists()
     {
-        // Arrange
         var dictionary = new ExpiringKeyDictionary();
-        dictionary.TryAdd("test", 2000);
+        const string key = "ContainsKey_ReturnsTrue_WhenKeyExists";
 
-        // Act
-        bool result = dictionary.ContainsKey("test");
+        dictionary.TryAdd(key, 2000);
 
-        // Assert
+        bool result = dictionary.ContainsKey(key);
+
         result.Should().BeTrue();
     }
 
     [Test]
     public void ContainsKey_ReturnsFalse_AfterKeyIsRemoved()
     {
-        // Arrange
         var dictionary = new ExpiringKeyDictionary();
-        dictionary.TryAdd("test", 2000);
+        const string key = "ContainsKey_ReturnsFalse_AfterKeyIsRemoved";
 
-        // Act
-        dictionary.RemoveSync("test");
-        bool result = dictionary.ContainsKey("test");
+        dictionary.TryAdd(key, 2000);
+        dictionary.RemoveSync(key);
 
-        // Assert
+        bool result = dictionary.ContainsKey(key);
+
         result.Should().BeFalse();
     }
 
     [Test]
     public void AddOrUpdate_AddsKey_WhenKeyDoesNotExist()
     {
-        // Arrange
         var dictionary = new ExpiringKeyDictionary();
+        const string key = "AddOrUpdate_AddsKey_WhenKeyDoesNotExist";
 
-        // Act
-        dictionary.AddOrUpdate("newKey", 2000);
+        dictionary.AddOrUpdate(key, 2000);
 
-        // Assert
-        dictionary.ContainsKey("newKey").Should().BeTrue();
+        dictionary.ContainsKey(key).Should().BeTrue();
     }
 
     [Test]
     public void AddOrUpdate_UpdatesKey_WhenKeyAlreadyExists()
     {
-        // Arrange
         var dictionary = new ExpiringKeyDictionary();
-        dictionary.AddOrUpdate("test", 2000);
+        const string key = "AddOrUpdate_UpdatesKey_WhenKeyAlreadyExists";
 
-        // Act
-        dictionary.AddOrUpdate("test", 5000);
+        dictionary.AddOrUpdate(key, 2000);
+        dictionary.AddOrUpdate(key, 5000);
 
-        // Assert
-        dictionary.ContainsKey("test").Should().BeTrue();
+        dictionary.ContainsKey(key).Should().BeTrue();
     }
 
     [Test]
     public void GetOrAdd_ReturnsTimer_WhenKeyDoesNotExist()
     {
-        // Arrange
         var dictionary = new ExpiringKeyDictionary();
+        const string key = "GetOrAdd_ReturnsTimer_WhenKeyDoesNotExist";
 
-        // Act
-        var timer = dictionary.GetOrAdd("newKey", 2000);
+        var timer = dictionary.GetOrAdd(key, 2000);
 
-        // Assert
         timer.Should().NotBeNull();
-        dictionary.ContainsKey("newKey").Should().BeTrue();
+        dictionary.ContainsKey(key).Should().BeTrue();
     }
 
     [Test]
     public void GetOrAdd_ReturnsExistingTimer_WhenKeyAlreadyExists()
     {
-        // Arrange
         var dictionary = new ExpiringKeyDictionary();
-        var firstTimer = dictionary.GetOrAdd("test", 2000);
+        const string key = "GetOrAdd_ReturnsExistingTimer_WhenKeyAlreadyExists";
 
-        // Act
-        var secondTimer = dictionary.GetOrAdd("test", 5000);
+        var firstTimer = dictionary.GetOrAdd(key, 2000);
+        var secondTimer = dictionary.GetOrAdd(key, 5000);
 
-        // Assert
         secondTimer.Should().NotBeNull();
-        dictionary.ContainsKey("test").Should().BeTrue();
+        dictionary.ContainsKey(key).Should().BeTrue();
     }
 
     [Test]
     public void TryRemove_RemovesKey_WhenKeyExists()
     {
-        // Arrange
         var dictionary = new ExpiringKeyDictionary();
-        dictionary.TryAdd("test", 2000);
+        const string key = "TryRemove_RemovesKey_WhenKeyExists";
 
-        // Act
-        dictionary.TryRemoveSync("test");
+        dictionary.TryAdd(key, 2000);
+        dictionary.TryRemoveSync(key);
 
-        // Assert
-        dictionary.ContainsKey("test").Should().BeFalse();
+        dictionary.ContainsKey(key).Should().BeFalse();
     }
 
     [Test]
     public void TryRemove_DoesNotThrow_WhenKeyDoesNotExist()
     {
-        // Arrange
         var dictionary = new ExpiringKeyDictionary();
+        const string key = "TryRemove_DoesNotThrow_WhenKeyDoesNotExist";
 
-        // Act & Assert
-        dictionary.TryRemoveSync("nonexistent");
-        dictionary.ContainsKey("nonexistent").Should().BeFalse();
+        dictionary.TryRemoveSync(key);
+        dictionary.ContainsKey(key).Should().BeFalse();
     }
 
     [Test]
     public async Task TryRemove_Async_RemovesKey_WhenKeyExists()
     {
-        // Arrange
         var dictionary = new ExpiringKeyDictionary();
-        dictionary.TryAdd("test", 2000);
+        const string key = "TryRemove_Async_RemovesKey_WhenKeyExists";
 
-        // Act
-        await dictionary.TryRemove("test");
+        dictionary.TryAdd(key, 2000);
+        await dictionary.TryRemove(key);
 
-        // Assert
-        dictionary.ContainsKey("test").Should().BeFalse();
+        dictionary.ContainsKey(key).Should().BeFalse();
     }
 
     [Test]
     public async Task TryRemove_Async_DoesNotThrow_WhenKeyDoesNotExist()
     {
-        // Arrange
         var dictionary = new ExpiringKeyDictionary();
+        const string key = "TryRemove_Async_DoesNotThrow_WhenKeyDoesNotExist";
 
-        // Act & Assert
-        await dictionary.TryRemove("nonexistent");
-        dictionary.ContainsKey("nonexistent").Should().BeFalse();
+        await dictionary.TryRemove(key);
+        dictionary.ContainsKey(key).Should().BeFalse();
     }
 
     [Test]
     public void RemoveSync_ReturnsTrue_WhenKeyExists()
     {
-        // Arrange
         var dictionary = new ExpiringKeyDictionary();
-        dictionary.TryAdd("test", 2000);
+        const string key = "RemoveSync_ReturnsTrue_WhenKeyExists";
 
-        // Act
-        bool result = dictionary.RemoveSync("test");
+        dictionary.TryAdd(key, 2000);
+        bool result = dictionary.RemoveSync(key);
 
-        // Assert
         result.Should().BeTrue();
-        dictionary.ContainsKey("test").Should().BeFalse();
+        dictionary.ContainsKey(key).Should().BeFalse();
     }
 
     [Test]
     public void RemoveSync_ReturnsFalse_WhenKeyDoesNotExist()
     {
-        // Arrange
         var dictionary = new ExpiringKeyDictionary();
+        const string key = "RemoveSync_ReturnsFalse_WhenKeyDoesNotExist";
 
-        // Act
-        bool result = dictionary.RemoveSync("nonexistent");
+        bool result = dictionary.RemoveSync(key);
 
-        // Assert
         result.Should().BeFalse();
     }
 
     [Test]
     public async Task Remove_Async_ReturnsTrue_WhenKeyExists()
     {
-        // Arrange
         var dictionary = new ExpiringKeyDictionary();
-        dictionary.TryAdd("test", 2000);
+        const string key = "Remove_Async_ReturnsTrue_WhenKeyExists";
 
-        // Act
-        bool result = await dictionary.Remove("test");
+        dictionary.TryAdd(key, 2000);
+        bool result = await dictionary.Remove(key);
 
-        // Assert
         result.Should().BeTrue();
-        dictionary.ContainsKey("test").Should().BeFalse();
+        dictionary.ContainsKey(key).Should().BeFalse();
     }
 
     [Test]
     public async Task Remove_Async_ReturnsFalse_WhenKeyDoesNotExist()
     {
-        // Arrange
         var dictionary = new ExpiringKeyDictionary();
+        const string key = "Remove_Async_ReturnsFalse_WhenKeyDoesNotExist";
 
-        // Act
-        bool result = await dictionary.Remove("nonexistent");
+        bool result = await dictionary.Remove(key);
 
-        // Assert
         result.Should().BeFalse();
     }
 
     [Test]
     public void ClearSync_RemovesAllKeys()
     {
-        // Arrange
         var dictionary = new ExpiringKeyDictionary();
-        dictionary.TryAdd("key1", 2000);
-        dictionary.TryAdd("key2", 2000);
-        dictionary.TryAdd("key3", 2000);
 
-        // Act
+        const string key1 = "ClearSync_RemovesAllKeys_1";
+        const string key2 = "ClearSync_RemovesAllKeys_2";
+        const string key3 = "ClearSync_RemovesAllKeys_3";
+
+        dictionary.TryAdd(key1, 2000);
+        dictionary.TryAdd(key2, 2000);
+        dictionary.TryAdd(key3, 2000);
+
         dictionary.ClearSync();
 
-        // Assert
-        dictionary.ContainsKey("key1").Should().BeFalse();
-        dictionary.ContainsKey("key2").Should().BeFalse();
-        dictionary.ContainsKey("key3").Should().BeFalse();
+        dictionary.ContainsKey(key1).Should().BeFalse();
+        dictionary.ContainsKey(key2).Should().BeFalse();
+        dictionary.ContainsKey(key3).Should().BeFalse();
     }
 
     [Test]
     public void ClearSync_DoesNotThrow_WhenDictionaryIsEmpty()
     {
-        // Arrange
         var dictionary = new ExpiringKeyDictionary();
 
-        // Act & Assert
         dictionary.ClearSync();
-        dictionary.ContainsKey("any").Should().BeFalse();
+        dictionary.ContainsKey("ClearSync_DoesNotThrow_WhenDictionaryIsEmpty").Should().BeFalse();
     }
 
     [Test]
     public async Task Clear_Async_RemovesAllKeys()
     {
-        // Arrange
         var dictionary = new ExpiringKeyDictionary();
-        dictionary.TryAdd("key1", 2000);
-        dictionary.TryAdd("key2", 2000);
-        dictionary.TryAdd("key3", 2000);
 
-        // Act
+        const string key1 = "Clear_Async_RemovesAllKeys_1";
+        const string key2 = "Clear_Async_RemovesAllKeys_2";
+        const string key3 = "Clear_Async_RemovesAllKeys_3";
+
+        dictionary.TryAdd(key1, 2000);
+        dictionary.TryAdd(key2, 2000);
+        dictionary.TryAdd(key3, 2000);
+
         await dictionary.Clear();
 
-        // Assert
-        dictionary.ContainsKey("key1").Should().BeFalse();
-        dictionary.ContainsKey("key2").Should().BeFalse();
-        dictionary.ContainsKey("key3").Should().BeFalse();
+        dictionary.ContainsKey(key1).Should().BeFalse();
+        dictionary.ContainsKey(key2).Should().BeFalse();
+        dictionary.ContainsKey(key3).Should().BeFalse();
     }
 
     [Test]
     public async Task Clear_Async_DoesNotThrow_WhenDictionaryIsEmpty()
     {
-        // Arrange
         var dictionary = new ExpiringKeyDictionary();
 
-        // Act & Assert
         await dictionary.Clear();
-        dictionary.ContainsKey("any").Should().BeFalse();
+        dictionary.ContainsKey("Clear_Async_DoesNotThrow_WhenDictionaryIsEmpty").Should().BeFalse();
     }
 
     [Test]
     public void Key_Expires_AfterExpirationTime()
     {
-        // Arrange
         var dictionary = new ExpiringKeyDictionary();
-        dictionary.TryAdd("test", 100); // 100ms expiration
+        const string key = "Key_Expires_AfterExpirationTime";
 
-        // Act
-        dictionary.ContainsKey("test").Should().BeTrue();
-        Thread.Sleep(150); // Wait for expiration
+        dictionary.TryAdd(key, 100);
 
-        // Assert
-        dictionary.ContainsKey("test").Should().BeFalse();
+        dictionary.ContainsKey(key).Should().BeTrue();
+        Thread.Sleep(150);
+
+        dictionary.ContainsKey(key).Should().BeFalse();
     }
 
     [Test]
     public void Key_DoesNotExpire_BeforeExpirationTime()
     {
-        // Arrange
         var dictionary = new ExpiringKeyDictionary();
-        dictionary.TryAdd("test", 200); // 200ms expiration
+        const string key = "Key_DoesNotExpire_BeforeExpirationTime";
 
-        // Act
-        Thread.Sleep(50); // Wait less than expiration time
+        dictionary.TryAdd(key, 200);
+        Thread.Sleep(50);
 
-        // Assert
-        dictionary.ContainsKey("test").Should().BeTrue();
+        dictionary.ContainsKey(key).Should().BeTrue();
     }
 
     [Test]
     public void AddOrUpdate_ResetsExpiration_WhenKeyExists()
     {
-        // Arrange
         var dictionary = new ExpiringKeyDictionary();
-        dictionary.TryAdd("test", 500); // 500ms expiration
+        const string key = "AddOrUpdate_ResetsExpiration_WhenKeyExists";
 
-        // Act
-        Thread.Sleep(200); // Wait partway through expiration
-        dictionary.ContainsKey("test").Should().BeTrue(); // Verify it still exists
-        dictionary.AddOrUpdate("test", 1000); // Reset expiration to 1000ms
-        Thread.Sleep(600); // Wait, but not long enough for new expiration (should have 400ms left)
+        dictionary.TryAdd(key, 500);
 
-        // Assert
-        dictionary.ContainsKey("test").Should().BeTrue();
+        Thread.Sleep(200);
+        dictionary.ContainsKey(key).Should().BeTrue();
+
+        dictionary.AddOrUpdate(key, 1000);
+
+        Thread.Sleep(600);
+
+        dictionary.ContainsKey(key).Should().BeTrue();
     }
 
     [Test]
     public void TryAdd_WithEmptyString_Works()
     {
-        // Arrange
         var dictionary = new ExpiringKeyDictionary();
+        const string key = "";
 
-        // Act
-        bool result = dictionary.TryAdd("", 2000);
+        bool result = dictionary.TryAdd(key, 2000);
 
-        // Assert
         result.Should().BeTrue();
-        dictionary.ContainsKey("").Should().BeTrue();
+        dictionary.ContainsKey(key).Should().BeTrue();
     }
 
     [Test]
     public void TryAdd_WithZeroExpiration_Works()
     {
-        // Arrange
         var dictionary = new ExpiringKeyDictionary();
+        const string key = "TryAdd_WithZeroExpiration_Works";
 
-        // Act
-        bool result = dictionary.TryAdd("test", 0);
+        bool result = dictionary.TryAdd(key, 0);
 
-        // Assert
         result.Should().BeTrue();
-        // Key should expire immediately or very quickly
         Thread.Sleep(10);
-        dictionary.ContainsKey("test").Should().BeFalse();
+        dictionary.ContainsKey(key).Should().BeFalse();
     }
 
     [Test]
     public void TryAdd_WithVeryLongExpiration_Works()
     {
-        // Arrange
         var dictionary = new ExpiringKeyDictionary();
+        const string key = "TryAdd_WithVeryLongExpiration_Works";
 
-        // Act
-        bool result = dictionary.TryAdd("test", int.MaxValue);
+        bool result = dictionary.TryAdd(key, int.MaxValue);
 
-        // Assert
         result.Should().BeTrue();
-        dictionary.ContainsKey("test").Should().BeTrue();
+        dictionary.ContainsKey(key).Should().BeTrue();
     }
 
     [Test]
     public void MultipleOperations_OnSameKey_WorkCorrectly()
     {
-        // Arrange
         var dictionary = new ExpiringKeyDictionary();
+        const string key = "MultipleOperations_OnSameKey_WorkCorrectly";
 
-        // Act & Assert
-        bool tryAdd1 = dictionary.TryAdd("test", 2000);
+        bool tryAdd1 = dictionary.TryAdd(key, 2000);
         tryAdd1.Should().BeTrue();
 
-        dictionary.ContainsKey("test").Should().BeTrue();
+        dictionary.ContainsKey(key).Should().BeTrue();
 
-        bool tryAdd2 = dictionary.TryAdd("test", 3000);
+        bool tryAdd2 = dictionary.TryAdd(key, 3000);
         tryAdd2.Should().BeFalse();
 
-        dictionary.AddOrUpdate("test", 4000);
-        dictionary.ContainsKey("test").Should().BeTrue();
+        dictionary.AddOrUpdate(key, 4000);
+        dictionary.ContainsKey(key).Should().BeTrue();
 
-        var timer = dictionary.GetOrAdd("test", 5000);
+        var timer = dictionary.GetOrAdd(key, 5000);
         timer.Should().NotBeNull();
 
-        bool removed = dictionary.RemoveSync("test");
+        bool removed = dictionary.RemoveSync(key);
         removed.Should().BeTrue();
-        dictionary.ContainsKey("test").Should().BeFalse();
+        dictionary.ContainsKey(key).Should().BeFalse();
     }
 
     [Test]
     public void ConcurrentOperations_WorkCorrectly()
     {
-        // Arrange
         var dictionary = new ExpiringKeyDictionary();
+        const string prefix = "ConcurrentOperations_WorkCorrectly";
 
-        // Act - Simulate concurrent operations
         Parallel.For(0, 100, i =>
         {
-            string key = $"key{i}";
-            dictionary.TryAdd(key, 2000);
+            dictionary.TryAdd($"{prefix}_{i}", 2000);
         });
 
-        // Assert
         for (int i = 0; i < 100; i++)
         {
-            dictionary.ContainsKey($"key{i}").Should().BeTrue();
+            dictionary.ContainsKey($"{prefix}_{i}").Should().BeTrue();
         }
     }
 
     [Test]
     public void Dispose_ClearsAllKeys()
     {
-        // Arrange
         var dictionary = new ExpiringKeyDictionary();
-        dictionary.TryAdd("key1", 2000);
-        dictionary.TryAdd("key2", 2000);
 
-        // Act
+        const string key1 = "Dispose_ClearsAllKeys_1";
+        const string key2 = "Dispose_ClearsAllKeys_2";
+
+        dictionary.TryAdd(key1, 2000);
+        dictionary.TryAdd(key2, 2000);
+
         dictionary.Dispose();
 
-        // Assert
-        dictionary.ContainsKey("key1").Should().BeFalse();
-        dictionary.ContainsKey("key2").Should().BeFalse();
+        dictionary.ContainsKey(key1).Should().BeFalse();
+        dictionary.ContainsKey(key2).Should().BeFalse();
     }
 
     [Test]
     public async Task DisposeAsync_ClearsAllKeys()
     {
-        // Arrange
         var dictionary = new ExpiringKeyDictionary();
-        dictionary.TryAdd("key1", 2000);
-        dictionary.TryAdd("key2", 2000);
 
-        // Act
+        const string key1 = "DisposeAsync_ClearsAllKeys_1";
+        const string key2 = "DisposeAsync_ClearsAllKeys_2";
+
+        dictionary.TryAdd(key1, 2000);
+        dictionary.TryAdd(key2, 2000);
+
         await dictionary.DisposeAsync();
 
-        // Assert
-        dictionary.ContainsKey("key1").Should().BeFalse();
-        dictionary.ContainsKey("key2").Should().BeFalse();
+        dictionary.ContainsKey(key1).Should().BeFalse();
+        dictionary.ContainsKey(key2).Should().BeFalse();
     }
 }
