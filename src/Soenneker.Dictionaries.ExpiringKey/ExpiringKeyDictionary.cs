@@ -20,7 +20,7 @@ public sealed class ExpiringKeyDictionary : IExpiringKeyDictionary
     public void AddOrUpdate(string key, int expirationTimeMilliseconds)
     {
         _keyDict.AddOrUpdate(key, 
-            CreateTimer(key, expirationTimeMilliseconds), 
+            _ => CreateTimer(key, expirationTimeMilliseconds), 
             (_, oldTimer) => 
             {
                 oldTimer.Dispose();
@@ -30,12 +30,26 @@ public sealed class ExpiringKeyDictionary : IExpiringKeyDictionary
 
     public bool TryAdd(string key, int expirationTimeMilliseconds)
     {
+        if (expirationTimeMilliseconds == 0)
+        {
+            var timer = CreateStoppedTimer(key);
+
+            if (!_keyDict.TryAdd(key, timer))
+            {
+                timer.Dispose();
+                return false;
+            }
+
+            TryRemoveSync(key);
+            return true;
+        }
+
         return _keyDict.TryAdd(key, CreateTimer(key, expirationTimeMilliseconds));
     }
 
     public Timer GetOrAdd(string key, int expirationTimeMilliseconds)
     {
-        return _keyDict.GetOrAdd(key, CreateTimer(key, expirationTimeMilliseconds));
+        return _keyDict.GetOrAdd(key, _ => CreateTimer(key, expirationTimeMilliseconds));
     }
 
     public ValueTask TryRemove(string key)
@@ -81,6 +95,11 @@ public sealed class ExpiringKeyDictionary : IExpiringKeyDictionary
     private Timer CreateTimer(string key, int expirationTimeMilliseconds)
     {
         return new Timer(ExpireSync, key, expirationTimeMilliseconds, Timeout.Infinite);
+    }
+
+    private Timer CreateStoppedTimer(string key)
+    {
+        return new Timer(ExpireSync, key, Timeout.Infinite, Timeout.Infinite);
     }
 
     private ValueTask Expire(object? state)
