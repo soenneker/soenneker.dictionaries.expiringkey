@@ -124,6 +124,9 @@ public sealed class ExpiringKeyDictionary : IExpiringKeyDictionary
         return DisposeAsync();
     }
 
+    /// <summary>
+    /// Releases resources used by the current instance.
+    /// </summary>
     public void Dispose()
     {
         foreach (Timer timer in _keyDict.Values)
@@ -134,6 +137,10 @@ public sealed class ExpiringKeyDictionary : IExpiringKeyDictionary
         _keyDict.Clear();
     }
 
+    /// <summary>
+    /// Asynchronously releases resources used by the current instance.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public async ValueTask DisposeAsync()
     {
         foreach (Timer timer in _keyDict.Values)
