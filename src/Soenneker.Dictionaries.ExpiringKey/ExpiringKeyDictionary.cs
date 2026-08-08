@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using System.Threading;
 using Soenneker.Extensions.ValueTask;
 using System.Collections.Generic;
+using System;
 
 namespace Soenneker.Dictionaries.ExpiringKey;
 
@@ -19,24 +20,37 @@ public sealed class ExpiringKeyDictionary : IExpiringKeyDictionary
 
     public void AddOrUpdate(string key, int expirationTimeMilliseconds)
     {
-        _keyDict.AddOrUpdate(key, 
-            _ => CreateTimer(key, expirationTimeMilliseconds), 
-            (_, oldTimer) => 
+        Timer replacement = CreateStoppedTimer(key);
+
+        while (true)
+        {
+            if (_keyDict.TryGetValue(key, out Timer? current))
             {
-                oldTimer.Dispose();
-                return CreateTimer(key, expirationTimeMilliseconds);
-            });
+                if (!_keyDict.TryUpdate(key, replacement, current))
+                    continue;
+
+                replacement.Change(expirationTimeMilliseconds, Timeout.Infinite);
+                current.Dispose();
+                return;
+            }
+
+            if (_keyDict.TryAdd(key, replacement))
+            {
+                replacement.Change(expirationTimeMilliseconds, Timeout.Infinite);
+                return;
+            }
+        }
     }
 
     public bool TryAdd(string key, int expirationTimeMilliseconds)
     {
         if (expirationTimeMilliseconds == 0)
         {
-            var timer = CreateStoppedTimer(key);
+            var immediateTimer = CreateStoppedTimer(key);
 
-            if (!_keyDict.TryAdd(key, timer))
+            if (!_keyDict.TryAdd(key, immediateTimer))
             {
-                timer.Dispose();
+                immediateTimer.Dispose();
                 return false;
             }
 
@@ -44,12 +58,39 @@ public sealed class ExpiringKeyDictionary : IExpiringKeyDictionary
             return true;
         }
 
-        return _keyDict.TryAdd(key, CreateTimer(key, expirationTimeMilliseconds));
+        Timer timer = CreateStoppedTimer(key);
+
+        if (_keyDict.TryAdd(key, timer))
+        {
+            timer.Change(expirationTimeMilliseconds, Timeout.Infinite);
+            return true;
+        }
+
+        timer.Dispose();
+        return false;
     }
 
     public Timer GetOrAdd(string key, int expirationTimeMilliseconds)
     {
-        return _keyDict.GetOrAdd(key, _ => CreateTimer(key, expirationTimeMilliseconds));
+        if (_keyDict.TryGetValue(key, out Timer? existing))
+            return existing;
+
+        Timer candidate = CreateStoppedTimer(key);
+
+        while (true)
+        {
+            if (_keyDict.TryAdd(key, candidate))
+            {
+                candidate.Change(expirationTimeMilliseconds, Timeout.Infinite);
+                return candidate;
+            }
+
+            if (_keyDict.TryGetValue(key, out existing))
+            {
+                candidate.Dispose();
+                return existing;
+            }
+        }
     }
 
     public ValueTask TryRemove(string key)
@@ -92,26 +133,34 @@ public sealed class ExpiringKeyDictionary : IExpiringKeyDictionary
         return true;
     }
 
-    private Timer CreateTimer(string key, int expirationTimeMilliseconds)
-    {
-        return new Timer(ExpireSync, key, expirationTimeMilliseconds, Timeout.Infinite);
-    }
-
     private Timer CreateStoppedTimer(string key)
     {
-        return new Timer(ExpireSync, key, Timeout.Infinite, Timeout.Infinite);
+        var state = new ExpirationState(this, key);
+        var timer = new Timer(static value => ((ExpirationState)value!).Expire(), state, Timeout.Infinite, Timeout.Infinite);
+        state.Timer = timer;
+        return timer;
     }
 
-    private ValueTask Expire(object? state)
+    private void Expire(string key, Timer timer)
     {
-        var key = (string) state!;
-        return TryRemove(key);
+        if (_keyDict.TryRemove(new KeyValuePair<string, Timer>(key, timer)))
+            timer.Dispose();
     }
 
-    private void ExpireSync(object? state)
+    private sealed class ExpirationState
     {
-        var key = (string)state!;
-        TryRemoveSync(key);
+        private readonly ExpiringKeyDictionary _owner;
+        private readonly string _key;
+
+        public Timer Timer { get; set; } = null!;
+
+        public ExpirationState(ExpiringKeyDictionary owner, string key)
+        {
+            _owner = owner;
+            _key = key;
+        }
+
+        public void Expire() => _owner.Expire(_key, Timer);
     }
 
     public void ClearSync()
