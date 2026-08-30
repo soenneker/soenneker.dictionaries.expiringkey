@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 namespace Soenneker.Dictionaries.ExpiringKey.Abstract;
 
 /// <summary>
-/// A concurrent dictionary that helps you efficiently manage keys with expiration times
+/// A thread-safe set of string keys, each backed by an independent one-shot expiration timer.
 /// </summary>
 public interface IExpiringKeyDictionary: IDisposable, IAsyncDisposable
 {
@@ -32,7 +32,7 @@ public interface IExpiringKeyDictionary: IDisposable, IAsyncDisposable
     bool TryAdd(string key, int expirationTimeMilliseconds);
 
     /// <summary>
-    /// Gets the existing key or adds a new one with an expiration time if it does not exist.
+    /// Gets the existing key's timer without refreshing it, or adds a new key with an expiration time.
     /// </summary>
     /// <param name="key">The key to get or add.</param>
     /// <param name="expirationTimeMilliseconds">The expiration time in milliseconds for the key.</param>
@@ -67,12 +67,12 @@ public interface IExpiringKeyDictionary: IDisposable, IAsyncDisposable
     bool RemoveSync(string key);
 
     /// <summary>
-    /// Clears all keys synchronously.
+    /// Clears and disposes all current key timers synchronously without disposing the dictionary.
     /// </summary>
     void ClearSync();
 
     /// <summary>
-    /// Clears all keys asynchronously.
+    /// Clears and disposes all current key timers asynchronously without disposing the dictionary.
     /// </summary>
     /// <returns>A ValueTask representing the asynchronous operation.</returns>
     ValueTask Clear();

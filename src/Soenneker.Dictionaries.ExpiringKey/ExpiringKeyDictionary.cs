@@ -1,136 +1,131 @@
-using Soenneker.Dictionaries.ExpiringKey.Abstract;
-using System.Collections.Concurrent;
-using System.Threading.Tasks;
-using System.Threading;
-using Soenneker.Extensions.ValueTask;
-using System.Collections.Generic;
 using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Soenneker.Dictionaries.ExpiringKey.Abstract;
 
 namespace Soenneker.Dictionaries.ExpiringKey;
 
-/// <inheritdoc cref="IExpiringKeyDictionary"/>
 public sealed class ExpiringKeyDictionary : IExpiringKeyDictionary
 {
     private readonly ConcurrentDictionary<string, Timer> _keyDict = new();
+    private readonly object _lifecycleLock = new();
+    private bool _disposed;
 
     public bool ContainsKey(string key)
     {
-        return _keyDict.ContainsKey(key);
+        lock (_lifecycleLock)
+        {
+            ThrowIfDisposed();
+            return _keyDict.ContainsKey(key);
+        }
     }
 
     public void AddOrUpdate(string key, int expirationTimeMilliseconds)
     {
-        Timer replacement = CreateStoppedTimer(key);
+        ValidateExpiration(expirationTimeMilliseconds);
 
-        while (true)
+        lock (_lifecycleLock)
         {
+            ThrowIfDisposed();
+
+            Timer replacement = CreateStoppedTimer(key);
+            replacement.Change(expirationTimeMilliseconds, Timeout.Infinite);
+
             if (_keyDict.TryGetValue(key, out Timer? current))
             {
-                if (!_keyDict.TryUpdate(key, replacement, current))
-                    continue;
-
-                replacement.Change(expirationTimeMilliseconds, Timeout.Infinite);
+                _keyDict[key] = replacement;
                 current.Dispose();
-                return;
             }
-
-            if (_keyDict.TryAdd(key, replacement))
+            else
             {
-                replacement.Change(expirationTimeMilliseconds, Timeout.Infinite);
-                return;
+                _keyDict.TryAdd(key, replacement);
             }
         }
     }
 
     public bool TryAdd(string key, int expirationTimeMilliseconds)
     {
-        if (expirationTimeMilliseconds == 0)
-        {
-            var immediateTimer = CreateStoppedTimer(key);
+        ValidateExpiration(expirationTimeMilliseconds);
 
-            if (!_keyDict.TryAdd(key, immediateTimer))
-            {
-                immediateTimer.Dispose();
+        lock (_lifecycleLock)
+        {
+            ThrowIfDisposed();
+
+            if (_keyDict.ContainsKey(key))
                 return false;
-            }
 
-            TryRemoveSync(key);
-            return true;
-        }
-
-        Timer timer = CreateStoppedTimer(key);
-
-        if (_keyDict.TryAdd(key, timer))
-        {
+            Timer timer = CreateStoppedTimer(key);
             timer.Change(expirationTimeMilliseconds, Timeout.Infinite);
-            return true;
-        }
 
-        timer.Dispose();
-        return false;
+            if (_keyDict.TryAdd(key, timer))
+                return true;
+
+            timer.Dispose();
+            return false;
+        }
     }
 
     public Timer GetOrAdd(string key, int expirationTimeMilliseconds)
     {
-        if (_keyDict.TryGetValue(key, out Timer? existing))
-            return existing;
+        ValidateExpiration(expirationTimeMilliseconds);
 
-        Timer candidate = CreateStoppedTimer(key);
-
-        while (true)
+        lock (_lifecycleLock)
         {
-            if (_keyDict.TryAdd(key, candidate))
-            {
-                candidate.Change(expirationTimeMilliseconds, Timeout.Infinite);
-                return candidate;
-            }
+            ThrowIfDisposed();
 
-            if (_keyDict.TryGetValue(key, out existing))
-            {
-                candidate.Dispose();
+            if (_keyDict.TryGetValue(key, out Timer? existing))
                 return existing;
-            }
+
+            Timer timer = CreateStoppedTimer(key);
+            timer.Change(expirationTimeMilliseconds, Timeout.Infinite);
+            _keyDict.TryAdd(key, timer);
+            return timer;
         }
     }
 
-    public ValueTask TryRemove(string key)
+    public async ValueTask TryRemove(string key)
     {
-        if (_keyDict.TryRemove(key, out Timer? timer))
-        {
-            return timer.DisposeAsync();
-        }
+        Timer? timer = Take(key);
 
-        return ValueTask.CompletedTask;
+        if (timer is not null)
+            await timer.DisposeAsync().ConfigureAwait(false);
     }
 
-    public void TryRemoveSync(string key)
-    {
-        if (_keyDict.TryRemove(key, out Timer? timer))
-        {
-            timer.Dispose();
-        }
-    }
+    public void TryRemoveSync(string key) => Take(key)?.Dispose();
 
     public async ValueTask<bool> Remove(string key)
     {
-        _keyDict.Remove(key, out Timer? timer);
+        Timer? timer = Take(key);
 
-        if (timer == null)
+        if (timer is null)
             return false;
 
-        await timer.DisposeAsync().NoSync();
+        await timer.DisposeAsync().ConfigureAwait(false);
         return true;
     }
 
     public bool RemoveSync(string key)
     {
-        _keyDict.Remove(key, out Timer? timer);
+        Timer? timer = Take(key);
 
-        if (timer == null) 
+        if (timer is null)
             return false;
-        
+
         timer.Dispose();
         return true;
+    }
+
+    private Timer? Take(string key)
+    {
+        lock (_lifecycleLock)
+        {
+            ThrowIfDisposed();
+            _keyDict.TryRemove(key, out Timer? timer);
+            return timer;
+        }
     }
 
     private Timer CreateStoppedTimer(string key)
@@ -143,8 +138,12 @@ public sealed class ExpiringKeyDictionary : IExpiringKeyDictionary
 
     private void Expire(string key, Timer timer)
     {
-        if (_keyDict.TryRemove(new KeyValuePair<string, Timer>(key, timer)))
-            timer.Dispose();
+        lock (_lifecycleLock)
+        {
+            _keyDict.TryRemove(new KeyValuePair<string, Timer>(key, timer));
+        }
+
+        timer.Dispose();
     }
 
     private sealed class ExpirationState
@@ -152,51 +151,79 @@ public sealed class ExpiringKeyDictionary : IExpiringKeyDictionary
         private readonly ExpiringKeyDictionary _owner;
         private readonly string _key;
 
-        public Timer Timer { get; set; } = null!;
+        internal Timer Timer { get; set; } = null!;
 
-        public ExpirationState(ExpiringKeyDictionary owner, string key)
+        internal ExpirationState(ExpiringKeyDictionary owner, string key)
         {
             _owner = owner;
             _key = key;
         }
 
-        public void Expire() => _owner.Expire(_key, Timer);
+        internal void Expire() => _owner.Expire(_key, Timer);
     }
 
     public void ClearSync()
     {
-        Dispose();
+        Timer[] timers = Drain(markDisposed: false);
+
+        for (var i = 0; i < timers.Length; i++)
+            timers[i].Dispose();
     }
 
-    public ValueTask Clear()
+    public async ValueTask Clear()
     {
-        return DisposeAsync();
+        Timer[] timers = Drain(markDisposed: false);
+
+        for (var i = 0; i < timers.Length; i++)
+            await timers[i].DisposeAsync().ConfigureAwait(false);
     }
 
-    /// <summary>
-    /// Releases resources used by the current instance.
-    /// </summary>
     public void Dispose()
     {
-        foreach (Timer timer in _keyDict.Values)
-        {
-            timer.Dispose();
-        }
+        Timer[] timers = Drain(markDisposed: true);
 
-        _keyDict.Clear();
+        for (var i = 0; i < timers.Length; i++)
+            timers[i].Dispose();
     }
 
-    /// <summary>
-    /// Asynchronously releases resources used by the current instance.
-    /// </summary>
-    /// <returns>A task that represents the asynchronous operation.</returns>
     public async ValueTask DisposeAsync()
     {
-        foreach (Timer timer in _keyDict.Values)
-        {
-            await timer.DisposeAsync().NoSync();
-        }
+        Timer[] timers = Drain(markDisposed: true);
 
-        _keyDict.Clear();
+        for (var i = 0; i < timers.Length; i++)
+            await timers[i].DisposeAsync().ConfigureAwait(false);
+    }
+
+    private Timer[] Drain(bool markDisposed)
+    {
+        lock (_lifecycleLock)
+        {
+            if (_disposed)
+            {
+                if (!markDisposed)
+                    ThrowIfDisposed();
+
+                return Array.Empty<Timer>();
+            }
+
+            if (markDisposed)
+                _disposed = true;
+
+            Timer[] timers = _keyDict.Values.ToArray();
+            _keyDict.Clear();
+            return timers;
+        }
+    }
+
+    private void ThrowIfDisposed()
+    {
+        if (_disposed)
+            throw new ObjectDisposedException(nameof(ExpiringKeyDictionary));
+    }
+
+    private static void ValidateExpiration(int expirationTimeMilliseconds)
+    {
+        if (expirationTimeMilliseconds < Timeout.Infinite)
+            throw new ArgumentOutOfRangeException(nameof(expirationTimeMilliseconds));
     }
 }

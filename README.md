@@ -5,43 +5,59 @@
 
 # Soenneker.Dictionaries.ExpiringKey
 
-A concurrent dictionary that helps you efficiently manage keys with expiration times.
+A thread-safe in-memory set of string keys with an independent one-shot expiration timer per key.
 
-## Install
+## Installation
 
 ```bash
 dotnet add package Soenneker.Dictionaries.ExpiringKey
 ```
 
-## Quick start
+## Usage
 
 ```csharp
-using Soenneker.Dictionaries.ExpiringKey.Abstract;
+using Soenneker.Dictionaries.ExpiringKey;
 
-IExpiringKeyDictionary expiringKeyDictionary = /* resolve from DI */;
-var result = expiringKeyDictionary.ContainsKey("value");
+await using var recentEvents = new ExpiringKeyDictionary();
+
+bool firstObservation = recentEvents.TryAdd(
+    eventId,
+    expirationTimeMilliseconds: 60_000);
+
+if (!firstObservation)
+{
+    // The key is still inside its original one-minute lifetime.
+}
 ```
 
-Checks if the provided key exists in the dictionary.
+`TryAdd` does not refresh an existing key. To add the key or restart its expiration from now, use `AddOrUpdate`:
 
-## What you get
+```csharp
+recentEvents.AddOrUpdate(eventId, expirationTimeMilliseconds: 60_000);
+```
 
-- `IExpiringKeyDictionary` — A concurrent dictionary that helps you efficiently manage keys with expiration times.
+`GetOrAdd` returns the timer for compatibility. When the key already exists, its original timer and expiration remain unchanged. Do not call `Change` or `Dispose` on the returned timer; doing so can desynchronize the timer from dictionary membership.
 
-## API at a glance
+## Expiration values
 
-| API | What it does | Result / important behavior |
-| --- | --- | --- |
-| `IExpiringKeyDictionary.ContainsKey(key)` | Checks if the provided key exists in the dictionary. | True if the key exists; otherwise, false. |
-| `IExpiringKeyDictionary.AddOrUpdate(key, expirationTimeMilliseconds)` | Adds a key with an expiration time, or updates the expiration time if the key already exists. | Returns no value; the requested change is complete when the method returns. |
-| `IExpiringKeyDictionary.TryAdd(key, expirationTimeMilliseconds)` | Tries to add a key with an expiration time. | True if the key was added; otherwise, false. |
-| `IExpiringKeyDictionary.GetOrAdd(key, expirationTimeMilliseconds)` | Gets the existing key or adds a new one with an expiration time if it does not exist. | The timer associated with the key. |
-| `IExpiringKeyDictionary.TryRemove(key)` | Tries to remove the key asynchronously. | A ValueTask representing the asynchronous operation. |
-| `IExpiringKeyDictionary.TryRemoveSync(key)` | Tries to remove the key synchronously. | Returns no value; the requested change is complete when the method returns. |
-| `IExpiringKeyDictionary.Remove(key)` | Removes the key asynchronously. | A ValueTask representing the asynchronous operation and a boolean indicating success. |
-| `IExpiringKeyDictionary.RemoveSync(key)` | Removes the key synchronously. | True if the key was removed; otherwise, false. |
-| `IExpiringKeyDictionary.Clear()` | Clears all keys asynchronously. | A ValueTask representing the asynchronous operation. |
+- `0` adds the key successfully and schedules it for immediate asynchronous removal.
+- Positive values specify the one-shot delay in milliseconds.
+- `Timeout.Infinite` (`-1`) keeps the key until explicit removal, clear, or disposal.
+- Values below `-1` are rejected before the dictionary is mutated.
 
-## Practical notes
+Timer callbacks are scheduled by the runtime, so removal can occur shortly after the nominal deadline rather than at an exact instant.
 
-- Dispose instances you own when their scope ends so held resources can be released.
+## Removal, clearing, and disposal
+
+```csharp
+bool removed = await recentEvents.Remove(eventId);
+await recentEvents.TryRemove(anotherEventId); // no result when absence is unimportant
+
+await recentEvents.Clear(); // removes all keys; the dictionary remains reusable
+```
+
+`Remove` reports whether the key existed. `TryRemove` is the no-result variant. Synchronous counterparts are available when asynchronous timer disposal is unnecessary.
+
+`Clear`/`ClearSync` remove the current keys but allow subsequent use. `Dispose`/`DisposeAsync` are terminal, release all timers, and make later operations throw `ObjectDisposedException`.
+
+This type creates one `Timer` per key. For very large cardinalities, prefer a bucketed or centrally scheduled expiration structure.

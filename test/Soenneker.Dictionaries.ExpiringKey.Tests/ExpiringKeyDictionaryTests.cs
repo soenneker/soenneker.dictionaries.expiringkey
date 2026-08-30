@@ -1,5 +1,6 @@
 using AwesomeAssertions;
 using Soenneker.Tests.HostedUnit;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -442,36 +443,32 @@ public class ExpiringKeyDictionaryTests : HostedUnitTest
     }
 
     [Test]
-    public void Dispose_ClearsAllKeys()
+    public void Dispose_PreventsFurtherUse()
     {
         var dictionary = new ExpiringKeyDictionary();
 
         const string key1 = "Dispose_ClearsAllKeys_1";
-        const string key2 = "Dispose_ClearsAllKeys_2";
 
         dictionary.TryAdd(key1, 2000);
-        dictionary.TryAdd(key2, 2000);
 
         dictionary.Dispose();
 
-        dictionary.ContainsKey(key1).Should().BeFalse();
-        dictionary.ContainsKey(key2).Should().BeFalse();
+        Action action = () => dictionary.ContainsKey(key1);
+        action.Should().Throw<ObjectDisposedException>();
     }
 
     [Test]
-    public async Task DisposeAsync_ClearsAllKeys()
+    public async Task DisposeAsync_PreventsFurtherUse()
     {
         var dictionary = new ExpiringKeyDictionary();
 
         const string key1 = "DisposeAsync_ClearsAllKeys_1";
-        const string key2 = "DisposeAsync_ClearsAllKeys_2";
 
         dictionary.TryAdd(key1, 2000);
-        dictionary.TryAdd(key2, 2000);
 
         await dictionary.DisposeAsync();
 
-        dictionary.ContainsKey(key1).Should().BeFalse();
-        dictionary.ContainsKey(key2).Should().BeFalse();
+        Action action = () => dictionary.ContainsKey(key1);
+        action.Should().Throw<ObjectDisposedException>();
     }
 }
