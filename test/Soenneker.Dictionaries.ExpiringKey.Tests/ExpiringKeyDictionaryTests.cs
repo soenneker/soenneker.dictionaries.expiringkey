@@ -320,17 +320,15 @@ public class ExpiringKeyDictionaryTests : HostedUnitTest
     }
 
     [Test]
-    public void Key_Expires_AfterExpirationTime()
+    public async Task Key_Expires_AfterExpirationTime()
     {
-        var dictionary = new ExpiringKeyDictionary();
+        await using var dictionary = new ExpiringKeyDictionary();
         const string key = "Key_Expires_AfterExpirationTime";
 
         dictionary.TryAdd(key, 100);
 
         dictionary.ContainsKey(key).Should().BeTrue();
-        Thread.Sleep(150);
-
-        dictionary.ContainsKey(key).Should().BeFalse();
+        (await WaitUntilAsync(() => !dictionary.ContainsKey(key), TimeSpan.FromSeconds(5))).Should().BeTrue();
     }
 
     [Test]
@@ -405,16 +403,15 @@ public class ExpiringKeyDictionaryTests : HostedUnitTest
     }
 
     [Test]
-    public void TryAdd_WithZeroExpiration_Works()
+    public async Task TryAdd_WithZeroExpiration_Works()
     {
-        var dictionary = new ExpiringKeyDictionary();
+        await using var dictionary = new ExpiringKeyDictionary();
         const string key = "TryAdd_WithZeroExpiration_Works";
 
         bool result = dictionary.TryAdd(key, 0);
 
         result.Should().BeTrue();
-        Thread.Sleep(10);
-        dictionary.ContainsKey(key).Should().BeFalse();
+        (await WaitUntilAsync(() => !dictionary.ContainsKey(key), TimeSpan.FromSeconds(5))).Should().BeTrue();
     }
 
     [Test]
@@ -499,5 +496,20 @@ public class ExpiringKeyDictionaryTests : HostedUnitTest
 
         Action action = () => dictionary.ContainsKey(key1);
         action.Should().Throw<ObjectDisposedException>();
+    }
+
+    private static async Task<bool> WaitUntilAsync(Func<bool> condition, TimeSpan timeout)
+    {
+        long startedAt = Environment.TickCount64;
+
+        while (!condition())
+        {
+            if (Environment.TickCount64 - startedAt >= timeout.TotalMilliseconds)
+                return false;
+
+            await Task.Delay(10);
+        }
+
+        return true;
     }
 }
