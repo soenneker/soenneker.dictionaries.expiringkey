@@ -8,6 +8,7 @@ using Soenneker.Dictionaries.ExpiringKey.Abstract;
 
 namespace Soenneker.Dictionaries.ExpiringKey;
 
+/// <inheritdoc cref="IExpiringKeyDictionary" />
 public sealed class ExpiringKeyDictionary : IExpiringKeyDictionary
 {
     private readonly ConcurrentDictionary<string, Timer> _keyDict = new();
