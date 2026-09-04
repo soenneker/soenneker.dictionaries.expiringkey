@@ -376,6 +376,35 @@ public class ExpiringKeyDictionaryTests : HostedUnitTest
     }
 
     [Test]
+    public void AddOrUpdate_WithNullKey_ThrowsBeforeMutation()
+    {
+        using var dictionary = new ExpiringKeyDictionary();
+
+        Action action = () => dictionary.AddOrUpdate(null!, 2000);
+
+        action.Should().Throw<ArgumentNullException>().WithParameterName("key");
+        dictionary.TryAdd("valid", 2000).Should().BeTrue();
+    }
+
+    [Test]
+    public void KeyOperations_WithNullKey_ThrowArgumentNullException()
+    {
+        using var dictionary = new ExpiringKeyDictionary();
+
+        Action contains = () => dictionary.ContainsKey(null!);
+        Action tryAdd = () => dictionary.TryAdd(null!, 2000);
+        Action getOrAdd = () => dictionary.GetOrAdd(null!, 2000);
+        Action tryRemove = () => dictionary.TryRemoveSync(null!);
+        Action remove = () => dictionary.RemoveSync(null!);
+
+        contains.Should().Throw<ArgumentNullException>().WithParameterName("key");
+        tryAdd.Should().Throw<ArgumentNullException>().WithParameterName("key");
+        getOrAdd.Should().Throw<ArgumentNullException>().WithParameterName("key");
+        tryRemove.Should().Throw<ArgumentNullException>().WithParameterName("key");
+        remove.Should().Throw<ArgumentNullException>().WithParameterName("key");
+    }
+
+    [Test]
     public void TryAdd_WithZeroExpiration_Works()
     {
         var dictionary = new ExpiringKeyDictionary();

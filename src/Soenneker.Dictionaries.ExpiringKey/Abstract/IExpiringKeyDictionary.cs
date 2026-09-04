@@ -14,6 +14,7 @@ public interface IExpiringKeyDictionary: IDisposable, IAsyncDisposable
     /// </summary>
     /// <param name="key">The key to check.</param>
     /// <returns>True if the key exists; otherwise, false.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="key"/> is null.</exception>
     bool ContainsKey(string key);
 
     /// <summary>
@@ -21,6 +22,7 @@ public interface IExpiringKeyDictionary: IDisposable, IAsyncDisposable
     /// </summary>
     /// <param name="key">The key to add or update.</param>
     /// <param name="expirationTimeMilliseconds">The expiration time in milliseconds for the key.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="key"/> is null.</exception>
     void AddOrUpdate(string key, int expirationTimeMilliseconds);
 
     /// <summary>
@@ -29,6 +31,7 @@ public interface IExpiringKeyDictionary: IDisposable, IAsyncDisposable
     /// <param name="key">The key to add.</param>
     /// <param name="expirationTimeMilliseconds">The expiration time in milliseconds for the key.</param>
     /// <returns>True if the key was added; otherwise, false.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="key"/> is null.</exception>
     bool TryAdd(string key, int expirationTimeMilliseconds);
 
     /// <summary>
@@ -37,6 +40,7 @@ public interface IExpiringKeyDictionary: IDisposable, IAsyncDisposable
     /// <param name="key">The key to get or add.</param>
     /// <param name="expirationTimeMilliseconds">The expiration time in milliseconds for the key.</param>
     /// <returns>The timer associated with the key.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="key"/> is null.</exception>
     Timer GetOrAdd(string key, int expirationTimeMilliseconds);
 
     /// <summary>
@@ -44,12 +48,14 @@ public interface IExpiringKeyDictionary: IDisposable, IAsyncDisposable
     /// </summary>
     /// <param name="key">The key to remove.</param>
     /// <returns>A ValueTask representing the asynchronous operation.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="key"/> is null.</exception>
     ValueTask TryRemove(string key);
 
     /// <summary>
     /// Tries to remove the key synchronously.
     /// </summary>
     /// <param name="key">The key to remove.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="key"/> is null.</exception>
     void TryRemoveSync(string key);
 
     /// <summary>
@@ -57,6 +63,7 @@ public interface IExpiringKeyDictionary: IDisposable, IAsyncDisposable
     /// </summary>
     /// <param name="key">The key to remove.</param>
     /// <returns>A ValueTask representing the asynchronous operation and a boolean indicating success.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="key"/> is null.</exception>
     ValueTask<bool> Remove(string key);
 
     /// <summary>
@@ -64,6 +71,7 @@ public interface IExpiringKeyDictionary: IDisposable, IAsyncDisposable
     /// </summary>
     /// <param name="key">The key to remove.</param>
     /// <returns>True if the key was removed; otherwise, false.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="key"/> is null.</exception>
     bool RemoveSync(string key);
 
     /// <summary>

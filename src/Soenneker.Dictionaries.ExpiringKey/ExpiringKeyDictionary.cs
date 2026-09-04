@@ -16,6 +16,8 @@ public sealed class ExpiringKeyDictionary : IExpiringKeyDictionary
 
     public bool ContainsKey(string key)
     {
+        ArgumentNullException.ThrowIfNull(key);
+
         lock (_lifecycleLock)
         {
             ThrowIfDisposed();
@@ -25,6 +27,7 @@ public sealed class ExpiringKeyDictionary : IExpiringKeyDictionary
 
     public void AddOrUpdate(string key, int expirationTimeMilliseconds)
     {
+        ArgumentNullException.ThrowIfNull(key);
         ValidateExpiration(expirationTimeMilliseconds);
 
         lock (_lifecycleLock)
@@ -48,6 +51,7 @@ public sealed class ExpiringKeyDictionary : IExpiringKeyDictionary
 
     public bool TryAdd(string key, int expirationTimeMilliseconds)
     {
+        ArgumentNullException.ThrowIfNull(key);
         ValidateExpiration(expirationTimeMilliseconds);
 
         lock (_lifecycleLock)
@@ -70,6 +74,7 @@ public sealed class ExpiringKeyDictionary : IExpiringKeyDictionary
 
     public Timer GetOrAdd(string key, int expirationTimeMilliseconds)
     {
+        ArgumentNullException.ThrowIfNull(key);
         ValidateExpiration(expirationTimeMilliseconds);
 
         lock (_lifecycleLock)
@@ -120,6 +125,8 @@ public sealed class ExpiringKeyDictionary : IExpiringKeyDictionary
 
     private Timer? Take(string key)
     {
+        ArgumentNullException.ThrowIfNull(key);
+
         lock (_lifecycleLock)
         {
             ThrowIfDisposed();
