@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -11,7 +10,7 @@ namespace Soenneker.Dictionaries.ExpiringKey;
 /// <inheritdoc cref="IExpiringKeyDictionary" />
 public sealed class ExpiringKeyDictionary : IExpiringKeyDictionary
 {
-    private readonly ConcurrentDictionary<string, Timer> _keyDict = new();
+    private readonly Dictionary<string, Timer> _keyDict = new(StringComparer.Ordinal);
     private readonly object _lifecycleLock = new();
     private bool _disposed;
 
@@ -131,7 +130,7 @@ public sealed class ExpiringKeyDictionary : IExpiringKeyDictionary
         lock (_lifecycleLock)
         {
             ThrowIfDisposed();
-            _keyDict.TryRemove(key, out Timer? timer);
+            _keyDict.Remove(key, out Timer? timer);
             return timer;
         }
     }
@@ -148,7 +147,8 @@ public sealed class ExpiringKeyDictionary : IExpiringKeyDictionary
     {
         lock (_lifecycleLock)
         {
-            _keyDict.TryRemove(new KeyValuePair<string, Timer>(key, timer));
+            if (_keyDict.TryGetValue(key, out Timer? current) && ReferenceEquals(current, timer))
+                _keyDict.Remove(key);
         }
 
         timer.Dispose();
