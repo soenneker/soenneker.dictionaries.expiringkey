@@ -192,7 +192,7 @@ public class ExpiringKeyDictionaryTests : HostedUnitTest
     }
 
     [Test]
-    public async Task TryRemove_Async_RemovesKey_WhenKeyExists()
+    public async ValueTask TryRemove_Async_RemovesKey_WhenKeyExists()
     {
         var dictionary = new ExpiringKeyDictionary();
         const string key = "TryRemove_Async_RemovesKey_WhenKeyExists";
@@ -204,7 +204,7 @@ public class ExpiringKeyDictionaryTests : HostedUnitTest
     }
 
     [Test]
-    public async Task TryRemove_Async_DoesNotThrow_WhenKeyDoesNotExist()
+    public async ValueTask TryRemove_Async_DoesNotThrow_WhenKeyDoesNotExist()
     {
         var dictionary = new ExpiringKeyDictionary();
         const string key = "TryRemove_Async_DoesNotThrow_WhenKeyDoesNotExist";
@@ -238,7 +238,7 @@ public class ExpiringKeyDictionaryTests : HostedUnitTest
     }
 
     [Test]
-    public async Task Remove_Async_ReturnsTrue_WhenKeyExists()
+    public async ValueTask Remove_Async_ReturnsTrue_WhenKeyExists()
     {
         var dictionary = new ExpiringKeyDictionary();
         const string key = "Remove_Async_ReturnsTrue_WhenKeyExists";
@@ -251,7 +251,7 @@ public class ExpiringKeyDictionaryTests : HostedUnitTest
     }
 
     [Test]
-    public async Task Remove_Async_ReturnsFalse_WhenKeyDoesNotExist()
+    public async ValueTask Remove_Async_ReturnsFalse_WhenKeyDoesNotExist()
     {
         var dictionary = new ExpiringKeyDictionary();
         const string key = "Remove_Async_ReturnsFalse_WhenKeyDoesNotExist";
@@ -291,7 +291,7 @@ public class ExpiringKeyDictionaryTests : HostedUnitTest
     }
 
     [Test]
-    public async Task Clear_Async_RemovesAllKeys()
+    public async ValueTask Clear_Async_RemovesAllKeys()
     {
         var dictionary = new ExpiringKeyDictionary();
 
@@ -311,7 +311,7 @@ public class ExpiringKeyDictionaryTests : HostedUnitTest
     }
 
     [Test]
-    public async Task Clear_Async_DoesNotThrow_WhenDictionaryIsEmpty()
+    public async ValueTask Clear_Async_DoesNotThrow_WhenDictionaryIsEmpty()
     {
         var dictionary = new ExpiringKeyDictionary();
 
@@ -320,7 +320,7 @@ public class ExpiringKeyDictionaryTests : HostedUnitTest
     }
 
     [Test]
-    public async Task Key_Expires_AfterExpirationTime()
+    public async ValueTask Key_Expires_AfterExpirationTime()
     {
         await using var dictionary = new ExpiringKeyDictionary();
         const string key = "Key_Expires_AfterExpirationTime";
@@ -403,7 +403,7 @@ public class ExpiringKeyDictionaryTests : HostedUnitTest
     }
 
     [Test]
-    public async Task TryAdd_WithZeroExpiration_Works()
+    public async ValueTask TryAdd_WithZeroExpiration_Works()
     {
         await using var dictionary = new ExpiringKeyDictionary();
         const string key = "TryAdd_WithZeroExpiration_Works";
@@ -484,7 +484,7 @@ public class ExpiringKeyDictionaryTests : HostedUnitTest
     }
 
     [Test]
-    public async Task DisposeAsync_PreventsFurtherUse()
+    public async ValueTask DisposeAsync_PreventsFurtherUse()
     {
         var dictionary = new ExpiringKeyDictionary();
 
