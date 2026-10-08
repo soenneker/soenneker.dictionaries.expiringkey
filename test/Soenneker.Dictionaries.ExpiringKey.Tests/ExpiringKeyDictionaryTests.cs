@@ -192,7 +192,7 @@ public class ExpiringKeyDictionaryTests : HostedUnitTest
     }
 
     [Test]
-    public async ValueTask TryRemove_Async_RemovesKey_WhenKeyExists()
+    public async ValueTask TryRemove_Async_RemovesKey_WhenKeyExists(CancellationToken cancellationToken)
     {
         var dictionary = new ExpiringKeyDictionary();
         const string key = "TryRemove_Async_RemovesKey_WhenKeyExists";
@@ -204,7 +204,7 @@ public class ExpiringKeyDictionaryTests : HostedUnitTest
     }
 
     [Test]
-    public async ValueTask TryRemove_Async_DoesNotThrow_WhenKeyDoesNotExist()
+    public async ValueTask TryRemove_Async_DoesNotThrow_WhenKeyDoesNotExist(CancellationToken cancellationToken)
     {
         var dictionary = new ExpiringKeyDictionary();
         const string key = "TryRemove_Async_DoesNotThrow_WhenKeyDoesNotExist";
@@ -238,7 +238,7 @@ public class ExpiringKeyDictionaryTests : HostedUnitTest
     }
 
     [Test]
-    public async ValueTask Remove_Async_ReturnsTrue_WhenKeyExists()
+    public async ValueTask Remove_Async_ReturnsTrue_WhenKeyExists(CancellationToken cancellationToken)
     {
         var dictionary = new ExpiringKeyDictionary();
         const string key = "Remove_Async_ReturnsTrue_WhenKeyExists";
@@ -251,7 +251,7 @@ public class ExpiringKeyDictionaryTests : HostedUnitTest
     }
 
     [Test]
-    public async ValueTask Remove_Async_ReturnsFalse_WhenKeyDoesNotExist()
+    public async ValueTask Remove_Async_ReturnsFalse_WhenKeyDoesNotExist(CancellationToken cancellationToken)
     {
         var dictionary = new ExpiringKeyDictionary();
         const string key = "Remove_Async_ReturnsFalse_WhenKeyDoesNotExist";
@@ -291,7 +291,7 @@ public class ExpiringKeyDictionaryTests : HostedUnitTest
     }
 
     [Test]
-    public async ValueTask Clear_Async_RemovesAllKeys()
+    public async ValueTask Clear_Async_RemovesAllKeys(CancellationToken cancellationToken)
     {
         var dictionary = new ExpiringKeyDictionary();
 
@@ -311,7 +311,7 @@ public class ExpiringKeyDictionaryTests : HostedUnitTest
     }
 
     [Test]
-    public async ValueTask Clear_Async_DoesNotThrow_WhenDictionaryIsEmpty()
+    public async ValueTask Clear_Async_DoesNotThrow_WhenDictionaryIsEmpty(CancellationToken cancellationToken)
     {
         var dictionary = new ExpiringKeyDictionary();
 
@@ -320,7 +320,7 @@ public class ExpiringKeyDictionaryTests : HostedUnitTest
     }
 
     [Test]
-    public async ValueTask Key_Expires_AfterExpirationTime()
+    public async ValueTask Key_Expires_AfterExpirationTime(CancellationToken cancellationToken)
     {
         await using var dictionary = new ExpiringKeyDictionary();
         const string key = "Key_Expires_AfterExpirationTime";
@@ -328,7 +328,7 @@ public class ExpiringKeyDictionaryTests : HostedUnitTest
         dictionary.TryAdd(key, 100);
 
         dictionary.ContainsKey(key).Should().BeTrue();
-        (await WaitUntilAsync(() => !dictionary.ContainsKey(key), TimeSpan.FromSeconds(5))).Should().BeTrue();
+        (await WaitUntilAsync(() => !dictionary.ContainsKey(key), TimeSpan.FromSeconds(5), cancellationToken: cancellationToken)).Should().BeTrue();
     }
 
     [Test]
@@ -403,7 +403,7 @@ public class ExpiringKeyDictionaryTests : HostedUnitTest
     }
 
     [Test]
-    public async ValueTask TryAdd_WithZeroExpiration_Works()
+    public async ValueTask TryAdd_WithZeroExpiration_Works(CancellationToken cancellationToken)
     {
         await using var dictionary = new ExpiringKeyDictionary();
         const string key = "TryAdd_WithZeroExpiration_Works";
@@ -411,7 +411,7 @@ public class ExpiringKeyDictionaryTests : HostedUnitTest
         bool result = dictionary.TryAdd(key, 0);
 
         result.Should().BeTrue();
-        (await WaitUntilAsync(() => !dictionary.ContainsKey(key), TimeSpan.FromSeconds(5))).Should().BeTrue();
+        (await WaitUntilAsync(() => !dictionary.ContainsKey(key), TimeSpan.FromSeconds(5), cancellationToken: cancellationToken)).Should().BeTrue();
     }
 
     [Test]
@@ -484,7 +484,7 @@ public class ExpiringKeyDictionaryTests : HostedUnitTest
     }
 
     [Test]
-    public async ValueTask DisposeAsync_PreventsFurtherUse()
+    public async ValueTask DisposeAsync_PreventsFurtherUse(CancellationToken cancellationToken)
     {
         var dictionary = new ExpiringKeyDictionary();
 
@@ -498,7 +498,7 @@ public class ExpiringKeyDictionaryTests : HostedUnitTest
         action.Should().Throw<ObjectDisposedException>();
     }
 
-    private static async Task<bool> WaitUntilAsync(Func<bool> condition, TimeSpan timeout)
+    private static async Task<bool> WaitUntilAsync(Func<bool> condition, TimeSpan timeout, CancellationToken cancellationToken = default)
     {
         long startedAt = Environment.TickCount64;
 
@@ -507,7 +507,7 @@ public class ExpiringKeyDictionaryTests : HostedUnitTest
             if (Environment.TickCount64 - startedAt >= timeout.TotalMilliseconds)
                 return false;
 
-            await Task.Delay(10);
+            await Task.Delay(10, cancellationToken: cancellationToken);
         }
 
         return true;
